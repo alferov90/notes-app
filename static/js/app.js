@@ -238,6 +238,8 @@ colorPicker.addEventListener("click", (e) => {
   if (dot) setColor(dot.dataset.color);
 });
 
+initThemeToggle();
+
 Promise.all([initUser(), loadNotes()]).catch((e) => {
   notesList.innerHTML = `<li class="list-empty">Не удалось загрузить: ${e.message}</li>`;
 });

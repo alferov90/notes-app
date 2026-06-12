@@ -8,6 +8,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
+  <script>
+    (function () {
+      if (localStorage.getItem("noteflow_theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
 </head>
 <body>
   <div class="app">
@@ -39,6 +46,20 @@
       <ul id="notes-list" class="notes-list" role="listbox" aria-label="Список заметок"></ul>
 
       <footer class="sidebar-footer">
+        <label class="theme-switch" for="theme-toggle">
+          <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 14.5A8.5 8.5 0 1112.5 6a6.5 6.5 0 008.5 8.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <span class="theme-switch-track">
+            <input type="checkbox" id="theme-toggle" role="switch" aria-label="Светлая тема">
+            <span class="theme-switch-thumb"></span>
+          </span>
+          <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="theme-switch-label">Светлая тема</span>
+        </label>
         <a href="/dashboard" class="user-card">
           <div class="user-avatar" id="user-avatar">?</div>
           <div class="user-info">
@@ -101,6 +122,7 @@
   </div>
 
   <script src="/static/js/auth.js"></script>
+  <script src="/static/js/theme.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

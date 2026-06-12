@@ -17,6 +17,22 @@
   --radius-lg: 16px;
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
   --font: "Inter", system-ui, -apple-system, sans-serif;
+  --toggle-track: #2a2a38;
+  --toggle-thumb: #f4f4f5;
+}
+
+[data-theme="light"] {
+  --bg: #f4f5f9;
+  --bg-elevated: #ffffff;
+  --bg-hover: #eef0f5;
+  --bg-card: #ffffff;
+  --border: #dde1ea;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --accent-glow: rgba(99, 102, 241, 0.18);
+  --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  --toggle-track: #dde1ea;
+  --toggle-thumb: #ffffff;
 }
 
 *,
@@ -33,6 +49,21 @@ html, body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+}
+
+html {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.sidebar,
+.editor,
+.note-item,
+.user-card,
+.search-wrap input,
+.auth-card,
+.dash-card,
+.feature-card {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 a {
@@ -279,6 +310,90 @@ a {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.theme-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.theme-switch:hover {
+  background: var(--bg-hover);
+}
+
+.theme-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.theme-icon-moon {
+  color: var(--text);
+}
+
+[data-theme="light"] .theme-icon-moon {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .theme-icon-sun {
+  color: #f59e0b;
+}
+
+.theme-switch-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--toggle-track);
+  border-radius: 100px;
+  flex-shrink: 0;
+  transition: background 0.25s;
+}
+
+.theme-switch-track input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  z-index: 1;
+}
+
+.theme-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: var(--toggle-thumb);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.theme-switch-track input:checked + .theme-switch-thumb {
+  transform: translateX(20px);
+}
+
+.theme-switch-track:has(input:checked) {
+  background: var(--accent);
+}
+
+.theme-switch-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+[data-theme="light"] .theme-switch-label {
+  color: var(--text);
 }
 
 .user-card {
