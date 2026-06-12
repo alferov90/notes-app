@@ -45,6 +45,8 @@ class TelegramStatus(BaseModel):
     configured: bool
     connected: bool
     bot_username: str | None = None
+    bot_ok: bool = False
+    bot_error: str | None = None
 
 
 class TelegramLink(BaseModel):

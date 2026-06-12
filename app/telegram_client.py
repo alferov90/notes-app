@@ -15,33 +15,65 @@ def api_url(method: str) -> str:
     return f"https://api.telegram.org/bot{settings.telegram_bot_token}/{method}"
 
 
-def send_message(chat_id: int, text: str) -> bool:
+def _api_post(method: str, json: dict | None = None) -> dict | None:
     if not settings.telegram_bot_token:
-        return False
+        return None
     try:
-        with httpx.Client(timeout=10) as client:
-            response = client.post(
-                api_url("sendMessage"),
-                json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
-            )
-            response.raise_for_status()
-            return True
+        with httpx.Client(timeout=15) as client:
+            response = client.post(api_url(method), json=json or {})
+            data = response.json()
+            if not data.get("ok"):
+                logger.error("Telegram %s failed: %s", method, data.get("description"))
+            return data
     except httpx.HTTPError:
-        logger.exception("Failed to send Telegram message to %s", chat_id)
-        return False
+        logger.exception("Telegram %s HTTP error", method)
+        return None
+
+
+def _api_get(method: str, params: dict | None = None) -> dict | None:
+    if not settings.telegram_bot_token:
+        return None
+    try:
+        with httpx.Client(timeout=15) as client:
+            response = client.get(api_url(method), params=params or {})
+            data = response.json()
+            if not data.get("ok"):
+                logger.error("Telegram %s failed: %s", method, data.get("description"))
+            return data
+    except httpx.HTTPError:
+        logger.exception("Telegram %s HTTP error", method)
+        return None
+
+
+def check_bot() -> tuple[bool, str | None]:
+    data = _api_get("getMe")
+    if not data or not data.get("ok"):
+        return False, (data or {}).get("description", "Bot unreachable")
+    username = data["result"].get("username")
+    return True, username
+
+
+def delete_webhook() -> bool:
+    data = _api_post("deleteWebhook", {"drop_pending_updates": True})
+    if data and data.get("ok"):
+        logger.info("Telegram webhook removed, polling enabled")
+        return True
+    return False
+
+
+def send_message(chat_id: int, text: str) -> bool:
+    data = _api_post(
+        "sendMessage",
+        {"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
+    )
+    return bool(data and data.get("ok"))
 
 
 def get_updates(offset: int | None = None) -> list[dict]:
-    if not settings.telegram_bot_token:
-        return []
     params: dict = {"timeout": 0, "allowed_updates": ["message"]}
     if offset is not None:
         params["offset"] = offset
-    try:
-        with httpx.Client(timeout=10) as client:
-            response = client.get(api_url("getUpdates"), params=params)
-            response.raise_for_status()
-            return response.json().get("result", [])
-    except httpx.HTTPError:
-        logger.exception("Failed to poll Telegram updates")
+    data = _api_get("getUpdates", params)
+    if not data or not data.get("ok"):
         return []
+    return data.get("result", [])

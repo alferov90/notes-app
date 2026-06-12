@@ -5,7 +5,7 @@ from app import crud, schemas
 from app.auth import get_current_user
 from app.database import get_db
 from app.models import User
-from app.telegram_client import is_configured
+from app.telegram_client import check_bot, is_configured
 
 router = APIRouter(prefix="/api/telegram", tags=["telegram"])
 
@@ -14,10 +14,23 @@ router = APIRouter(prefix="/api/telegram", tags=["telegram"])
 def telegram_status(current_user: User = Depends(get_current_user)):
     from app.config import settings
 
+    bot_ok = False
+    bot_error = None
+    bot_username = settings.telegram_bot_username or None
+
+    if is_configured():
+        bot_ok, info = check_bot()
+        if bot_ok:
+            bot_username = info
+        else:
+            bot_error = info
+
     return schemas.TelegramStatus(
         configured=is_configured(),
         connected=current_user.telegram_chat_id is not None,
-        bot_username=settings.telegram_bot_username or None,
+        bot_username=bot_username,
+        bot_ok=bot_ok,
+        bot_error=bot_error,
     )
 
 

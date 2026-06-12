@@ -6,7 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from app import crud
 from app.config import settings
 from app.database import SessionLocal
-from app.telegram_client import get_updates, is_configured, send_message
+from app.telegram_client import delete_webhook, get_updates, is_configured, send_message
 
 logger = logging.getLogger("noteflow")
 
@@ -108,7 +108,8 @@ def start_scheduler() -> None:
     _scheduler = BackgroundScheduler()
     _scheduler.add_job(process_reminders, "interval", seconds=30, id="reminders")
     if is_configured():
-        _scheduler.add_job(poll_telegram, "interval", seconds=3, id="telegram")
+        delete_webhook()
+        _scheduler.add_job(poll_telegram, "interval", seconds=2, id="telegram")
         logger.info("Telegram bot polling started (@%s)", settings.telegram_bot_username)
     else:
         logger.warning("TELEGRAM_BOT_TOKEN not set — Telegram notifications disabled")

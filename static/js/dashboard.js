@@ -40,6 +40,16 @@ async function updateTelegramUI() {
       statusEl.textContent = "Бот не настроен на сервере";
       statusEl.className = "telegram-status-badge telegram-status-warn";
       actionsEl.classList.add("hidden");
+      errorEl.textContent =
+        "Администратор должен добавить TELEGRAM_BOT_TOKEN и TELEGRAM_BOT_USERNAME в .env на сервере.";
+      return;
+    }
+
+    if (!status.bot_ok) {
+      statusEl.textContent = "Ошибка бота";
+      statusEl.className = "telegram-status-badge telegram-status-warn";
+      actionsEl.classList.add("hidden");
+      errorEl.textContent = status.bot_error || "Неверный токен бота";
       return;
     }
 
@@ -64,8 +74,8 @@ async function updateTelegramUI() {
         const res = await apiFetch("/api/telegram/link", { method: "POST" });
         window.open(res.link, "_blank", "noopener");
         $("#telegram-success").textContent =
-          "Откройте Telegram и нажмите Start в боте";
-        setTimeout(() => ($("#telegram-success").textContent = ""), 5000);
+          "В Telegram нажмите Start. Статус обновится автоматически…";
+        startTelegramPoll();
       } catch (err) {
         errorEl.textContent = err.message;
       }
@@ -75,6 +85,27 @@ async function updateTelegramUI() {
     statusEl.className = "telegram-status-badge telegram-status-warn";
     errorEl.textContent = err.message;
   }
+}
+
+let telegramPollTimer = null;
+
+function startTelegramPoll() {
+  clearInterval(telegramPollTimer);
+  let attempts = 0;
+  telegramPollTimer = setInterval(async () => {
+    attempts++;
+    const status = await apiFetch("/api/telegram/status");
+    if (status.connected) {
+      clearInterval(telegramPollTimer);
+      await updateTelegramUI();
+      $("#telegram-success").textContent = "Telegram успешно подключён!";
+      setTimeout(() => ($("#telegram-success").textContent = ""), 4000);
+    } else if (attempts >= 30) {
+      clearInterval(telegramPollTimer);
+      $("#telegram-error").textContent =
+        "Не удалось подключить. Нажмите Start в боте и попробуйте снова.";
+    }
+  }, 2000);
 }
 
 $("#btn-telegram-refresh")?.addEventListener("click", async () => {
