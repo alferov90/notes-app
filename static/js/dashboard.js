@@ -18,9 +18,82 @@ async function init() {
   });
   $("#stat-notes").textContent = stats.notes_count;
   $("#stat-pinned").textContent = stats.pinned_count;
+  $("#stat-reminders").textContent = stats.reminders_count;
 
   $("#form-name").value = user.name;
+  await updateTelegramUI();
 }
+
+async function updateTelegramUI() {
+  const statusEl = $("#telegram-status");
+  const actionsEl = $("#telegram-actions");
+  const linkEl = $("#telegram-link");
+  const disconnectBtn = $("#btn-telegram-disconnect");
+  const errorEl = $("#telegram-error");
+
+  errorEl.textContent = "";
+
+  try {
+    const status = await apiFetch("/api/telegram/status");
+
+    if (!status.configured) {
+      statusEl.textContent = "Бот не настроен на сервере";
+      statusEl.className = "telegram-status-badge telegram-status-warn";
+      actionsEl.classList.add("hidden");
+      return;
+    }
+
+    actionsEl.classList.remove("hidden");
+
+    if (status.connected) {
+      statusEl.textContent = `Подключено (@${status.bot_username})`;
+      statusEl.className = "telegram-status-badge telegram-status-ok";
+      linkEl.textContent = "Переподключить";
+      disconnectBtn.classList.remove("hidden");
+    } else {
+      statusEl.textContent = "Не подключено";
+      statusEl.className = "telegram-status-badge telegram-status-off";
+      linkEl.textContent = "Подключить Telegram";
+      disconnectBtn.classList.add("hidden");
+    }
+
+    linkEl.onclick = async (e) => {
+      e.preventDefault();
+      errorEl.textContent = "";
+      try {
+        const res = await apiFetch("/api/telegram/link", { method: "POST" });
+        window.open(res.link, "_blank", "noopener");
+        $("#telegram-success").textContent =
+          "Откройте Telegram и нажмите Start в боте";
+        setTimeout(() => ($("#telegram-success").textContent = ""), 5000);
+      } catch (err) {
+        errorEl.textContent = err.message;
+      }
+    };
+  } catch (err) {
+    statusEl.textContent = "Ошибка загрузки";
+    statusEl.className = "telegram-status-badge telegram-status-warn";
+    errorEl.textContent = err.message;
+  }
+}
+
+$("#btn-telegram-refresh")?.addEventListener("click", async () => {
+  await updateTelegramUI();
+  $("#telegram-success").textContent = "Статус обновлён";
+  setTimeout(() => ($("#telegram-success").textContent = ""), 2000);
+});
+
+$("#btn-telegram-disconnect")?.addEventListener("click", async () => {
+  if (!confirm("Отключить Telegram-уведомления?")) return;
+  try {
+    await apiFetch("/api/telegram/disconnect", { method: "DELETE" });
+    await updateTelegramUI();
+    $("#telegram-success").textContent = "Telegram отключён";
+    setTimeout(() => ($("#telegram-success").textContent = ""), 3000);
+  } catch (err) {
+    $("#telegram-error").textContent = err.message;
+  }
+});
 
 $("#profile-form").addEventListener("submit", async (e) => {
   e.preventDefault();

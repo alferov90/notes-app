@@ -41,7 +41,9 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=schemas.UserRead)
 def read_me(current_user: User = Depends(get_current_user)):
-    return current_user
+    return schemas.UserRead.model_validate(current_user).model_copy(
+        update={"telegram_connected": current_user.telegram_chat_id is not None}
+    )
 
 
 @router.patch("/me", response_model=schemas.UserRead)
@@ -50,7 +52,10 @@ def update_me(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return crud.update_user(db, current_user, updates)
+    user = crud.update_user(db, current_user, updates)
+    return schemas.UserRead.model_validate(user).model_copy(
+        update={"telegram_connected": user.telegram_chat_id is not None}
+    )
 
 
 @router.get("/me/stats", response_model=schemas.UserStats)

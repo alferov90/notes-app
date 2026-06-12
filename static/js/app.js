@@ -24,6 +24,9 @@ const btnDelete = $("#btn-delete");
 const colorPicker = $("#color-picker");
 const userName = $("#user-name");
 const userEmail = $("#user-email");
+const noteReminder = $("#note-reminder");
+const reminderHint = $("#reminder-hint");
+const btnClearReminder = $("#btn-clear-reminder");
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -39,6 +42,23 @@ function formatDate(iso) {
 function preview(text, max = 80) {
   const line = text.replace(/\n/g, " ").trim();
   return line.length > max ? line.slice(0, max) + "…" : line || "Без содержимого";
+}
+
+function toLocalDatetime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function getReminderValue() {
+  const val = noteReminder.value;
+  if (!val) return null;
+  return new Date(val).toISOString();
+}
+
+function hasActiveReminder(note) {
+  return note.reminder_at && !note.reminder_sent;
 }
 
 async function api(path = "", options = {}) {
@@ -68,6 +88,7 @@ function renderList() {
         <div class="note-item-preview">${escapeHtml(preview(note.content))}</div>
         <div class="note-item-meta">
           ${note.is_pinned ? '<span class="pin-icon" title="Закреплено">📌</span>' : ""}
+          ${hasActiveReminder(note) ? '<span class="reminder-icon" title="Напоминание">🔔</span>' : ""}
           <span>${formatDate(note.updated_at)}</span>
         </div>
       </div>
@@ -93,7 +114,16 @@ function updateToolbar(note) {
   colorPicker.querySelectorAll(".color-dot").forEach((dot) => {
     dot.classList.toggle("active", dot.dataset.color === note.color);
   });
-  noteMeta.textContent = `Создано: ${formatDate(note.created_at)} · Изменено: ${formatDate(note.updated_at)}`;
+  noteReminder.value = toLocalDatetime(note.reminder_at);
+  $("#reminder-bar").classList.toggle("has-reminder", hasActiveReminder(note));
+
+  let meta = `Создано: ${formatDate(note.created_at)} · Изменено: ${formatDate(note.updated_at)}`;
+  if (hasActiveReminder(note)) {
+    meta += ` · Напоминание: ${formatDate(note.reminder_at)}`;
+  } else if (note.reminder_sent) {
+    meta += " · Напоминание отправлено";
+  }
+  noteMeta.textContent = meta;
 }
 
 function selectNote(id) {
@@ -157,6 +187,7 @@ async function saveNote() {
         content: noteContent.value,
         color: note.color,
         is_pinned: note.is_pinned,
+        reminder_at: getReminderValue(),
       }),
     });
 
@@ -217,6 +248,20 @@ async function initUser() {
   userEmail.textContent = currentUser.email;
   const initial = currentUser.name.charAt(0).toUpperCase() || "?";
   $("#user-avatar").textContent = initial;
+
+  const tg = await apiFetch("/api/telegram/status");
+  if (!tg.configured) {
+    reminderHint.textContent = "Telegram-бот не настроен на сервере.";
+    reminderHint.classList.remove("hidden");
+    noteReminder.disabled = true;
+    btnClearReminder.disabled = true;
+  } else if (!tg.connected) {
+    reminderHint.innerHTML =
+      'Подключите Telegram в <a href="/dashboard">личном кабинете</a>, чтобы получать напоминания.';
+    reminderHint.classList.remove("hidden");
+  } else {
+    reminderHint.classList.add("hidden");
+  }
 }
 
 let searchTimer = null;
@@ -232,6 +277,11 @@ $("#btn-logout")?.addEventListener("click", logout);
 
 noteTitle.addEventListener("input", scheduleSave);
 noteContent.addEventListener("input", scheduleSave);
+noteReminder.addEventListener("change", scheduleSave);
+btnClearReminder.addEventListener("click", () => {
+  noteReminder.value = "";
+  scheduleSave();
+});
 
 colorPicker.addEventListener("click", (e) => {
   const dot = e.target.closest(".color-dot");

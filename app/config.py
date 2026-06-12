@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     secret_key: str = "change-me-in-production-use-openssl-rand-hex-32"
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
     algorithm: str = "HS256"
+    telegram_bot_token: str = ""
+    telegram_bot_username: str = ""
 
 
 settings = Settings()

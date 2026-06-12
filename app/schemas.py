@@ -27,6 +27,7 @@ class UserRead(BaseModel):
     name: str
     is_active: bool
     created_at: datetime
+    telegram_connected: bool = False
 
 
 class Token(BaseModel):
@@ -37,6 +38,17 @@ class Token(BaseModel):
 class UserStats(BaseModel):
     notes_count: int
     pinned_count: int
+    reminders_count: int = 0
+
+
+class TelegramStatus(BaseModel):
+    configured: bool
+    connected: bool
+    bot_username: str | None = None
+
+
+class TelegramLink(BaseModel):
+    link: str
 
 
 class NoteBase(BaseModel):
@@ -47,7 +59,7 @@ class NoteBase(BaseModel):
 
 
 class NoteCreate(NoteBase):
-    pass
+    reminder_at: datetime | None = None
 
 
 class NoteUpdate(BaseModel):
@@ -55,11 +67,14 @@ class NoteUpdate(BaseModel):
     content: str | None = None
     color: str | None = Field(default=None, max_length=32)
     is_pinned: bool | None = None
+    reminder_at: datetime | None = None
 
 
 class NoteRead(NoteBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    reminder_at: datetime | None = None
+    reminder_sent: bool = False
     created_at: datetime
     updated_at: datetime
