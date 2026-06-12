@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация — NoteFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="auth-body">
+  <div class="auth-bg"></div>
+
+  <div class="auth-container">
+    <a href="/" class="logo auth-logo">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 4h16v16H4V4z" stroke="currentColor" stroke-width="2" rx="2"/>
+        <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>NoteFlow</span>
+    </a>
+
+    <div class="auth-card">
+      <h1>Создать аккаунт</h1>
+      <p class="auth-sub">Начните вести заметки бесплатно</p>
+
+      <form id="register-form" class="auth-form">
+        <label class="form-field">
+          <span>Имя</span>
+          <input type="text" name="name" required autocomplete="name" placeholder="Алексей" minlength="1" maxlength="100">
+        </label>
+        <label class="form-field">
+          <span>Email</span>
+          <input type="email" name="email" required autocomplete="email" placeholder="you@example.com">
+        </label>
+        <label class="form-field">
+          <span>Пароль</span>
+          <input type="password" name="password" required autocomplete="new-password" placeholder="Минимум 8 символов" minlength="8">
+        </label>
+        <label class="form-field">
+          <span>Подтвердите пароль</span>
+          <input type="password" name="password_confirm" required autocomplete="new-password" placeholder="Повторите пароль">
+        </label>
+        <p id="form-error" class="form-error" role="alert"></p>
+        <button type="submit" id="submit-btn" class="btn btn-primary btn-full">Создать аккаунт</button>
+      </form>
+
+      <p class="auth-footer">
+        Уже есть аккаунт? <a href="/login">Войти</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/register.js"></script>
+</body>
+</html>

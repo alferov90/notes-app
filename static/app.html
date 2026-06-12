@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заметки — NoteFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <a href="/" class="logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 4h16v16H4V4z" stroke="currentColor" stroke-width="2" rx="2"/>
+            <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>NoteFlow</span>
+        </a>
+        <button id="btn-new" class="btn btn-primary" title="Новая заметка">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          Новая
+        </button>
+      </header>
+
+      <div class="search-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+          <path d="M20 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input id="search" type="search" placeholder="Поиск заметок..." autocomplete="off">
+      </div>
+
+      <ul id="notes-list" class="notes-list" role="listbox" aria-label="Список заметок"></ul>
+
+      <footer class="sidebar-footer">
+        <a href="/dashboard" class="user-card">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <span class="user-name" id="user-name">Загрузка…</span>
+            <span class="user-email" id="user-email"></span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </a>
+        <button id="btn-logout" class="btn btn-ghost btn-sm">Выйти</button>
+      </footer>
+    </aside>
+
+    <main class="editor" id="editor">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2>Выберите или создайте заметку</h2>
+        <p>Нажмите «Новая» или выберите заметку из списка слева</p>
+      </div>
+
+      <div class="editor-content hidden" id="editor-content">
+        <header class="editor-toolbar">
+          <div class="color-picker" id="color-picker" role="group" aria-label="Цвет заметки">
+            <button data-color="#6366f1" class="color-dot active" style="--dot-color:#6366f1" title="Индиго"></button>
+            <button data-color="#ec4899" class="color-dot" style="--dot-color:#ec4899" title="Розовый"></button>
+            <button data-color="#f59e0b" class="color-dot" style="--dot-color:#f59e0b" title="Янтарный"></button>
+            <button data-color="#10b981" class="color-dot" style="--dot-color:#10b981" title="Изумрудный"></button>
+            <button data-color="#3b82f6" class="color-dot" style="--dot-color:#3b82f6" title="Синий"></button>
+            <button data-color="#8b5cf6" class="color-dot" style="--dot-color:#8b5cf6" title="Фиолетовый"></button>
+          </div>
+          <div class="toolbar-actions">
+            <button id="btn-pin" class="btn btn-icon" title="Закрепить">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 17v5M9 3h6l1 7h4l-7 7-7-7h4l1-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button id="btn-delete" class="btn btn-icon btn-danger" title="Удалить">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <input id="note-title" class="note-title" type="text" placeholder="Заголовок" maxlength="255">
+        <textarea id="note-content" class="note-content" placeholder="Начните писать..."></textarea>
+
+        <footer class="editor-footer">
+          <span id="note-meta"></span>
+          <span class="save-status" id="save-status"></span>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
