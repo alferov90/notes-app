@@ -6,36 +6,19 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
 from app.migrations import migrate_schema
-from app.routers import auth, notes, telegram
+from app.routers import auth, events, telegram
 from app.scheduler import start_scheduler, stop_scheduler
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("noteflow")
+logger = logging.getLogger("dayflow")
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
-
-
-def verify_schema() -> None:
-    inspector = inspect(engine)
-    tables = set(inspector.get_table_names())
-    if "notes" in tables:
-        columns = {col["name"] for col in inspector.get_columns("notes")}
-        if "user_id" not in columns:
-            raise RuntimeError(
-                "Устаревшая схема БД: в таблице notes нет колонки user_id. "
-                "Выполните: docker compose down -v && docker compose up -d --build"
-            )
-    if "users" not in tables and "notes" in tables:
-        raise RuntimeError(
-            "Устаревшая схема БД: нет таблицы users. "
-            "Выполните: docker compose down -v && docker compose up -d --build"
-        )
 
 
 def init_db(retries: int = 10, delay: float = 2.0) -> None:
@@ -43,7 +26,6 @@ def init_db(retries: int = 10, delay: float = 2.0) -> None:
         try:
             Base.metadata.create_all(bind=engine)
             migrate_schema()
-            verify_schema()
             logger.info("Database ready")
             return
         except OperationalError as exc:
@@ -67,15 +49,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="NoteFlow",
-    description="SaaS-платформа для личных заметок",
-    version="2.1.0",
+    title="DayFlow",
+    description="Режим дня с Telegram-уведомлениями",
+    version="3.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     lifespan=lifespan,
 )
 app.include_router(auth.router)
-app.include_router(notes.router)
+app.include_router(events.router)
 app.include_router(telegram.router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -106,8 +88,8 @@ def register_page():
 
 
 @app.get("/app")
-def notes_app():
-    return serve_page("app.html")
+def schedule_app():
+    return serve_page("schedule.html")
 
 
 @app.get("/dashboard")

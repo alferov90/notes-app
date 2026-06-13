@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мой день — DayFlow</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="logo">
+      <span class="logo-icon">☀️</span>
+      <span>DayFlow</span>
+    </a>
+    <div class="nav-links">
+      <a href="/dashboard" class="btn btn-ghost" id="user-nav">Кабинет</a>
+      <button id="btn-logout" class="btn btn-ghost">Выйти</button>
+    </div>
+  </nav>
+
+  <main class="schedule-page">
+    <header class="schedule-header">
+      <h1>Мой день</h1>
+      <p id="today-date"></p>
+    </header>
+
+    <div id="telegram-banner" class="telegram-banner hidden">
+      <span>📱</span>
+      <span>Подключите <a href="/dashboard">Telegram</a>, чтобы получать уведомления.</span>
+    </div>
+
+    <div id="timeline" class="timeline"></div>
+  </main>
+
+  <button id="fab-add" class="fab" title="Добавить событие">+</button>
+
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2 id="modal-title">Новое событие</h2>
+      <form id="event-form">
+        <label class="form-field">
+          <span>Название</span>
+          <input type="text" id="event-title" required maxlength="120" placeholder="Завтрак, тренировка…">
+        </label>
+        <label class="form-field">
+          <span>Время</span>
+          <input type="time" id="event-time" required>
+        </label>
+        <div class="form-field">
+          <span>Иконка</span>
+          <div class="emoji-picker" id="emoji-picker"></div>
+        </div>
+        <div class="form-field">
+          <span>Дни недели</span>
+          <div class="day-chips" id="day-chips"></div>
+        </div>
+        <p id="form-error" class="form-error"></p>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" style="flex:1">Сохранить</button>
+          <button type="button" id="btn-cancel" class="btn btn-secondary">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/schedule.js?v=1"></script>
+</body>
+</html>

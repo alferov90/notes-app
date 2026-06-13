@@ -1,8 +1,8 @@
 import secrets
-from datetime import datetime, timezone
+from datetime import date
 
-from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.config import settings
@@ -45,32 +45,26 @@ def update_user(
 
 
 def get_user_stats(db: Session, user_id: int) -> schemas.UserStats:
-    notes_count = (
-        db.query(func.count(models.Note.id))
-        .filter(models.Note.user_id == user_id)
+    events_count = (
+        db.query(func.count(models.RoutineEvent.id))
+        .filter(models.RoutineEvent.user_id == user_id)
         .scalar()
         or 0
     )
-    pinned_count = (
-        db.query(func.count(models.Note.id))
-        .filter(models.Note.user_id == user_id, models.Note.is_pinned.is_(True))
-        .scalar()
-        or 0
-    )
-    reminders_count = (
-        db.query(func.count(models.Note.id))
+    active_events = (
+        db.query(func.count(models.RoutineEvent.id))
         .filter(
-            models.Note.user_id == user_id,
-            models.Note.reminder_at.isnot(None),
-            models.Note.reminder_sent.is_(False),
+            models.RoutineEvent.user_id == user_id,
+            models.RoutineEvent.is_active.is_(True),
         )
         .scalar()
         or 0
     )
+    user = get_user(db, user_id)
     return schemas.UserStats(
-        notes_count=notes_count,
-        pinned_count=pinned_count,
-        reminders_count=reminders_count,
+        events_count=events_count,
+        active_events=active_events,
+        telegram_connected=bool(user and user.telegram_chat_id),
     )
 
 
@@ -101,79 +95,54 @@ def unlink_telegram(db: Session, user: models.User) -> None:
     db.commit()
 
 
-def get_due_reminders(db: Session) -> list[models.Note]:
-    now = datetime.now(timezone.utc)
+def get_events(db: Session, user_id: int) -> list[models.RoutineEvent]:
     return (
-        db.query(models.Note)
-        .options(joinedload(models.Note.owner))
-        .join(models.User)
-        .filter(
-            models.Note.reminder_at.isnot(None),
-            models.Note.reminder_at <= now,
-            models.Note.reminder_sent.is_(False),
-            models.User.telegram_chat_id.isnot(None),
-        )
+        db.query(models.RoutineEvent)
+        .filter(models.RoutineEvent.user_id == user_id)
+        .order_by(models.RoutineEvent.event_time)
         .all()
     )
 
 
-def mark_reminder_sent(db: Session, note: models.Note) -> None:
-    note.reminder_sent = True
-    db.commit()
-
-
-def get_notes(
-    db: Session, user_id: int, search: str | None = None
-) -> list[models.Note]:
-    query = db.query(models.Note).filter(models.Note.user_id == user_id)
-    if search:
-        pattern = f"%{search.strip()}%"
-        query = query.filter(
-            or_(models.Note.title.ilike(pattern), models.Note.content.ilike(pattern))
-        )
-    return query.order_by(
-        models.Note.is_pinned.desc(), models.Note.updated_at.desc()
-    ).all()
-
-
-def get_note(db: Session, user_id: int, note_id: int) -> models.Note | None:
+def get_event(db: Session, user_id: int, event_id: int) -> models.RoutineEvent | None:
     return (
-        db.query(models.Note)
-        .filter(models.Note.id == note_id, models.Note.user_id == user_id)
+        db.query(models.RoutineEvent)
+        .filter(
+            models.RoutineEvent.id == event_id,
+            models.RoutineEvent.user_id == user_id,
+        )
         .first()
     )
 
 
-def create_note(
-    db: Session, user_id: int, note: schemas.NoteCreate
-) -> models.Note:
-    db_note = models.Note(user_id=user_id, **note.model_dump())
-    db.add(db_note)
+def create_event(
+    db: Session, user_id: int, event: schemas.EventCreate
+) -> models.RoutineEvent:
+    db_event = models.RoutineEvent(user_id=user_id, **event.model_dump())
+    db.add(db_event)
     db.commit()
-    db.refresh(db_note)
-    return db_note
+    db.refresh(db_event)
+    return db_event
 
 
-def update_note(
-    db: Session, note: models.Note, updates: schemas.NoteUpdate
-) -> models.Note:
+def update_event(
+    db: Session, event: models.RoutineEvent, updates: schemas.EventUpdate
+) -> models.RoutineEvent:
     data = updates.model_dump(exclude_unset=True)
-    if "reminder_at" in data:
-        if data["reminder_at"] is None:
-            data["reminder_sent"] = False
-        else:
-            reminder = data["reminder_at"]
-            if reminder.tzinfo is None:
-                reminder = reminder.replace(tzinfo=timezone.utc)
-            data["reminder_at"] = reminder
-            data["reminder_sent"] = False
+    if data:
+        data["last_notified_date"] = None
     for field, value in data.items():
-        setattr(note, field, value)
+        setattr(event, field, value)
     db.commit()
-    db.refresh(note)
-    return note
+    db.refresh(event)
+    return event
 
 
-def delete_note(db: Session, note: models.Note) -> None:
-    db.delete(note)
+def delete_event(db: Session, event: models.RoutineEvent) -> None:
+    db.delete(event)
+    db.commit()
+
+
+def mark_event_notified(db: Session, event: models.RoutineEvent, on_date: date) -> None:
+    event.last_notified_date = on_date
     db.commit()

@@ -1,11 +1,12 @@
-import html
 import logging
+from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from app import crud
 from app.config import settings
 from app.database import SessionLocal
+from app.routine_notifier import process_due_events
 from app.telegram_client import delete_webhook, get_updates, is_configured, send_message
 
 logger = logging.getLogger("noteflow")
@@ -14,36 +15,14 @@ _scheduler: BackgroundScheduler | None = None
 _telegram_offset: int | None = None
 
 
-def _format_reminder_message(title: str, content: str) -> str:
-    title = title.strip() or "Без названия"
-    preview = content.strip().replace("\n", " ")
-    if len(preview) > 200:
-        preview = preview[:200] + "…"
-    if not preview:
-        preview = "—"
-    return (
-        "🔔 <b>Напоминание NoteFlow</b>\n\n"
-        f"<b>{html.escape(title)}</b>\n"
-        f"{html.escape(preview)}"
-    )
-
-
-def process_reminders() -> None:
+def process_routines() -> None:
     db = SessionLocal()
     try:
-        due = crud.get_due_reminders(db)
-        for note in due:
-            if not note.owner.telegram_chat_id:
-                continue
-            sent = send_message(
-                note.owner.telegram_chat_id,
-                _format_reminder_message(note.title, note.content),
-            )
-            if sent:
-                crud.mark_reminder_sent(db, note)
-                logger.info("Reminder sent for note %s to user %s", note.id, note.user_id)
+        count = process_due_events(db)
+        if count:
+            logger.info("Sent %s routine notification(s)", count)
     except Exception:
-        logger.exception("Reminder job failed")
+        logger.exception("Routine job failed")
     finally:
         db.close()
 
@@ -72,26 +51,21 @@ def poll_telegram() -> None:
             if len(parts) < 2:
                 send_message(
                     chat_id,
-                    "👋 Привет! Откройте ссылку из личного кабинета NoteFlow, "
-                    "чтобы подключить уведомления.",
+                    "👋 Привет! Откройте ссылку из личного кабинета DayFlow.",
                 )
                 continue
 
             token = parts[1]
             user = crud.get_user_by_link_token(db, token)
             if not user:
-                send_message(
-                    chat_id,
-                    "❌ Ссылка недействительна или устарела. "
-                    "Создайте новую в личном кабинете NoteFlow.",
-                )
+                send_message(chat_id, "❌ Ссылка устарела. Создайте новую в DayFlow.")
                 continue
 
             crud.link_telegram(db, user, chat_id)
             send_message(
                 chat_id,
-                f"✅ Telegram подключён к аккаунту <b>{user.name}</b>!\n\n"
-                "Теперь вы будете получать напоминания по заметкам.",
+                f"✅ DayFlow подключён, <b>{user.name}</b>!\n\n"
+                "Буду присылать уведомления по вашему режиму дня.",
             )
             logger.info("Telegram linked for user %s", user.id)
     except Exception:
@@ -106,15 +80,30 @@ def start_scheduler() -> None:
         return
 
     _scheduler = BackgroundScheduler()
-    _scheduler.add_job(process_reminders, "interval", seconds=30, id="reminders")
+    _scheduler.add_job(
+        process_routines,
+        "interval",
+        seconds=30,
+        id="routines",
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=15,
+        next_run_time=datetime.now(),
+    )
     if is_configured():
         delete_webhook()
-        _scheduler.add_job(poll_telegram, "interval", seconds=2, id="telegram")
-        logger.info("Telegram bot polling started (@%s)", settings.telegram_bot_username)
-    else:
-        logger.warning("TELEGRAM_BOT_TOKEN not set — Telegram notifications disabled")
+        _scheduler.add_job(
+            poll_telegram,
+            "interval",
+            seconds=5,
+            id="telegram",
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=5,
+        )
+        logger.info("Telegram polling started (@%s)", settings.telegram_bot_username)
     _scheduler.start()
-    logger.info("Scheduler started")
+    logger.info("Scheduler started (routine check every 30s)")
 
 
 def stop_scheduler() -> None:

@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime, time
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, ForeignKey, String, Time, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -20,22 +20,24 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    notes: Mapped[list["Note"]] = relationship(
+    events: Mapped[list["RoutineEvent"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan"
     )
 
 
-class Note(Base):
-    __tablename__ = "notes"
+class RoutineEvent(Base):
+    __tablename__ = "routine_events"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    title: Mapped[str] = mapped_column(String(255), default="")
-    content: Mapped[str] = mapped_column(Text, default="")
-    color: Mapped[str] = mapped_column(String(32), default="#6366f1")
-    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
-    reminder_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    reminder_sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(120))
+    event_time: Mapped[time] = mapped_column(Time, index=True)
+    emoji: Mapped[str] = mapped_column(String(8), default="⏰")
+    days: Mapped[str] = mapped_column(String(32), default="all")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_notified_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -43,4 +45,4 @@ class Note(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    owner: Mapped["User"] = relationship(back_populates="notes")
+    owner: Mapped["User"] = relationship(back_populates="events")

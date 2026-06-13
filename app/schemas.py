@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime, time
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer
 
 
 class UserCreate(BaseModel):
@@ -36,9 +36,9 @@ class Token(BaseModel):
 
 
 class UserStats(BaseModel):
-    notes_count: int
-    pinned_count: int
-    reminders_count: int = 0
+    events_count: int
+    active_events: int
+    telegram_connected: bool
 
 
 class TelegramStatus(BaseModel):
@@ -53,30 +53,34 @@ class TelegramLink(BaseModel):
     link: str
 
 
-class NoteBase(BaseModel):
-    title: str = Field(default="", max_length=255)
-    content: str = ""
-    color: str = Field(default="#6366f1", max_length=32)
-    is_pinned: bool = False
+class EventBase(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    event_time: time
+    emoji: str = Field(default="⏰", max_length=8)
+    days: str = Field(default="all", max_length=32)
+    is_active: bool = True
 
 
-class NoteCreate(NoteBase):
-    reminder_at: datetime | None = None
+class EventCreate(EventBase):
+    pass
 
 
-class NoteUpdate(BaseModel):
-    title: str | None = Field(default=None, max_length=255)
-    content: str | None = None
-    color: str | None = Field(default=None, max_length=32)
-    is_pinned: bool | None = None
-    reminder_at: datetime | None = None
+class EventUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=120)
+    event_time: time | None = None
+    emoji: str | None = Field(default=None, max_length=8)
+    days: str | None = Field(default=None, max_length=32)
+    is_active: bool | None = None
 
 
-class NoteRead(NoteBase):
+class EventRead(EventBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    reminder_at: datetime | None = None
-    reminder_sent: bool = False
+    last_notified_date: date | None = None
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer("event_time")
+    def serialize_time(self, t: time) -> str:
+        return t.strftime("%H:%M")

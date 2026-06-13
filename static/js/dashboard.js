@@ -1,6 +1,76 @@
 if (!requireAuth()) throw new Error("redirecting");
 
-const $ = (sel) => document.querySelector(sel);
+const $ = (s) => document.querySelector(s);
+
+function setStatus(text, cls) {
+  const el = $("#telegram-status");
+  el.textContent = text;
+  el.className = `telegram-status-badge ${cls}`;
+}
+
+async function updateTelegramUI() {
+  const actions = $("#telegram-actions");
+  const errorEl = $("#telegram-error");
+  errorEl.textContent = "";
+
+  let user, status;
+  try {
+    [user, status] = await Promise.all([
+      apiFetch("/api/auth/me"),
+      apiFetch("/api/telegram/status").catch(() => null),
+    ]);
+  } catch (e) {
+    setStatus("Ошибка", "telegram-status-warn");
+    return;
+  }
+
+  const connected = user.telegram_connected || status?.connected;
+
+  if (!status?.configured && !connected) {
+    setStatus("Бот не настроен", "telegram-status-warn");
+    actions.classList.add("hidden");
+    errorEl.textContent = "Добавьте TELEGRAM_BOT_TOKEN в .env на сервере.";
+    return;
+  }
+
+  actions.classList.remove("hidden");
+
+  if (connected) {
+    const bot = status?.bot_username ? `@${status.bot_username}` : "Telegram";
+    setStatus(`Подключено (${bot})`, "telegram-status-ok");
+    $("#telegram-link").textContent = "Переподключить";
+    $("#btn-telegram-disconnect").classList.remove("hidden");
+  } else {
+    setStatus("Не подключено", "telegram-status-off");
+    $("#telegram-link").textContent = "Подключить Telegram";
+    $("#btn-telegram-disconnect").classList.add("hidden");
+  }
+
+  $("#telegram-link").onclick = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await apiFetch("/api/telegram/link", { method: "POST" });
+      window.open(res.link, "_blank");
+      $("#telegram-success").textContent = "Нажмите Start в Telegram";
+      pollTelegram();
+    } catch (err) {
+      errorEl.textContent = err.message;
+    }
+  };
+}
+
+function pollTelegram() {
+  let n = 0;
+  const t = setInterval(async () => {
+    n++;
+    const u = await apiFetch("/api/auth/me");
+    if (u.telegram_connected) {
+      clearInterval(t);
+      updateTelegramUI();
+      $("#telegram-success").textContent = "Telegram подключён!";
+    } else if (n > 30) clearInterval(t);
+  }, 2000);
+}
 
 async function init() {
   const [user, stats] = await Promise.all([
@@ -10,155 +80,37 @@ async function init() {
 
   $("#user-name").textContent = user.name;
   $("#user-email").textContent = user.email;
-  $("#profile-avatar").textContent = user.name.charAt(0).toUpperCase() || "?";
+  $("#profile-avatar").textContent = user.name.charAt(0).toUpperCase();
   $("#user-created").textContent = new Date(user.created_at).toLocaleDateString("ru-RU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+    day: "numeric", month: "long", year: "numeric",
   });
-  $("#stat-notes").textContent = stats.notes_count;
-  $("#stat-pinned").textContent = stats.pinned_count;
-  $("#stat-reminders").textContent = stats.reminders_count;
-
+  $("#stat-events").textContent = stats.events_count;
+  $("#stat-active").textContent = stats.active_events;
   $("#form-name").value = user.name;
+
   await updateTelegramUI();
 }
 
-async function updateTelegramUI() {
-  const statusEl = $("#telegram-status");
-  const actionsEl = $("#telegram-actions");
-  const linkEl = $("#telegram-link");
-  const disconnectBtn = $("#btn-telegram-disconnect");
-  const errorEl = $("#telegram-error");
+$("#btn-telegram-refresh").onclick = () => updateTelegramUI();
+$("#btn-telegram-disconnect").onclick = async () => {
+  if (!confirm("Отключить Telegram?")) return;
+  await apiFetch("/api/telegram/disconnect", { method: "DELETE" });
+  updateTelegramUI();
+};
 
-  errorEl.textContent = "";
-
-  try {
-    const status = await apiFetch("/api/telegram/status");
-
-    if (!status.configured) {
-      statusEl.textContent = "Бот не настроен на сервере";
-      statusEl.className = "telegram-status-badge telegram-status-warn";
-      actionsEl.classList.add("hidden");
-      errorEl.textContent =
-        "Администратор должен добавить TELEGRAM_BOT_TOKEN и TELEGRAM_BOT_USERNAME в .env на сервере.";
-      return;
-    }
-
-    if (!status.bot_ok) {
-      statusEl.textContent = "Ошибка бота";
-      statusEl.className = "telegram-status-badge telegram-status-warn";
-      actionsEl.classList.add("hidden");
-      errorEl.textContent = status.bot_error || "Неверный токен бота";
-      return;
-    }
-
-    actionsEl.classList.remove("hidden");
-
-    if (status.connected) {
-      statusEl.textContent = `Подключено (@${status.bot_username})`;
-      statusEl.className = "telegram-status-badge telegram-status-ok";
-      linkEl.textContent = "Переподключить";
-      disconnectBtn.classList.remove("hidden");
-    } else {
-      statusEl.textContent = "Не подключено";
-      statusEl.className = "telegram-status-badge telegram-status-off";
-      linkEl.textContent = "Подключить Telegram";
-      disconnectBtn.classList.add("hidden");
-    }
-
-    linkEl.onclick = async (e) => {
-      e.preventDefault();
-      errorEl.textContent = "";
-      try {
-        const res = await apiFetch("/api/telegram/link", { method: "POST" });
-        window.open(res.link, "_blank", "noopener");
-        $("#telegram-success").textContent =
-          "В Telegram нажмите Start. Статус обновится автоматически…";
-        startTelegramPoll();
-      } catch (err) {
-        errorEl.textContent = err.message;
-      }
-    };
-  } catch (err) {
-    statusEl.textContent = "Ошибка загрузки";
-    statusEl.className = "telegram-status-badge telegram-status-warn";
-    errorEl.textContent = err.message;
-  }
-}
-
-let telegramPollTimer = null;
-
-function startTelegramPoll() {
-  clearInterval(telegramPollTimer);
-  let attempts = 0;
-  telegramPollTimer = setInterval(async () => {
-    attempts++;
-    const status = await apiFetch("/api/telegram/status");
-    if (status.connected) {
-      clearInterval(telegramPollTimer);
-      await updateTelegramUI();
-      $("#telegram-success").textContent = "Telegram успешно подключён!";
-      setTimeout(() => ($("#telegram-success").textContent = ""), 4000);
-    } else if (attempts >= 30) {
-      clearInterval(telegramPollTimer);
-      $("#telegram-error").textContent =
-        "Не удалось подключить. Нажмите Start в боте и попробуйте снова.";
-    }
-  }, 2000);
-}
-
-$("#btn-telegram-refresh")?.addEventListener("click", async () => {
-  await updateTelegramUI();
-  $("#telegram-success").textContent = "Статус обновлён";
-  setTimeout(() => ($("#telegram-success").textContent = ""), 2000);
-});
-
-$("#btn-telegram-disconnect")?.addEventListener("click", async () => {
-  if (!confirm("Отключить Telegram-уведомления?")) return;
-  try {
-    await apiFetch("/api/telegram/disconnect", { method: "DELETE" });
-    await updateTelegramUI();
-    $("#telegram-success").textContent = "Telegram отключён";
-    setTimeout(() => ($("#telegram-success").textContent = ""), 3000);
-  } catch (err) {
-    $("#telegram-error").textContent = err.message;
-  }
-});
-
-$("#profile-form").addEventListener("submit", async (e) => {
+$("#profile-form").onsubmit = async (e) => {
   e.preventDefault();
-  const errorEl = $("#profile-error");
-  const successEl = $("#profile-success");
-  const btn = $("#save-profile");
-
-  errorEl.textContent = "";
-  successEl.textContent = "";
-  btn.disabled = true;
-
+  const updates = { name: $("#form-name").value.trim() };
+  if ($("#form-password").value) updates.password = $("#form-password").value;
   try {
-    const updates = { name: $("#form-name").value.trim() };
-    const password = $("#form-password").value;
-    if (password) updates.password = password;
-
-    const user = await apiFetch("/api/auth/me", {
-      method: "PATCH",
-      body: JSON.stringify(updates),
-    });
-
-    $("#user-name").textContent = user.name;
+    const u = await apiFetch("/api/auth/me", { method: "PATCH", body: JSON.stringify(updates) });
+    $("#user-name").textContent = u.name;
     $("#form-password").value = "";
-    successEl.textContent = "Профиль обновлён";
-    setTimeout(() => (successEl.textContent = ""), 3000);
+    $("#profile-success").textContent = "Сохранено";
   } catch (err) {
-    errorEl.textContent = err.message;
-  } finally {
-    btn.disabled = false;
+    $("#profile-error").textContent = err.message;
   }
-});
+};
 
-$("#btn-logout")?.addEventListener("click", logout);
-
-init().catch((e) => {
-  $("#profile-error").textContent = e.message;
-});
+$("#btn-logout").onclick = logout;
+init();

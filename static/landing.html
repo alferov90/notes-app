@@ -3,116 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NoteFlow — Заметки для каждого</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>DayFlow — Режим дня</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="landing-body">
-  <div class="landing-bg"></div>
-
-  <nav class="landing-nav">
+<body>
+  <nav class="nav">
     <a href="/" class="logo">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4 4h16v16H4V4z" stroke="currentColor" stroke-width="2" rx="2"/>
-        <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <span>NoteFlow</span>
+      <span class="logo-icon">☀️</span>
+      <span>DayFlow</span>
     </a>
-    <div class="nav-actions">
+    <div class="nav-links">
       <a href="/login" class="btn btn-ghost">Войти</a>
-      <a href="/register" class="btn btn-primary">Начать бесплатно</a>
+      <a href="/register" class="btn btn-primary">Начать</a>
     </div>
   </nav>
 
-  <header class="hero">
-    <div class="hero-badge">SaaS для личных заметок</div>
-    <h1>Думайте ясно.<br><span class="gradient-text">Пишите свободно.</span></h1>
-    <p class="hero-sub">
-      NoteFlow — облачный сервис для заметок с автосохранением, поиском и личным кабинетом.
-      Ваши мысли всегда под рукой и защищены.
+  <section class="landing-hero">
+    <h1>Ваш режим дня.<br>В нужный момент.</h1>
+    <p class="subtitle">
+      Составьте расписание — подъём, работа, спорт, отдых.
+      DayFlow напомнит о каждом событии в Telegram.
     </p>
-    <div class="hero-cta">
-      <a href="/register" class="btn btn-primary btn-lg">Создать аккаунт</a>
-      <a href="/login" class="btn btn-outline btn-lg">Уже есть аккаунт</a>
-    </div>
-
-    <div class="hero-preview">
-      <div class="preview-window">
-        <div class="preview-bar">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="preview-content">
-          <div class="preview-sidebar">
-            <div class="preview-item active"></div>
-            <div class="preview-item"></div>
-            <div class="preview-item"></div>
-          </div>
-          <div class="preview-editor">
-            <div class="preview-title"></div>
-            <div class="preview-line long"></div>
-            <div class="preview-line"></div>
-            <div class="preview-line medium"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <section class="features">
-    <h2>Всё, что нужно для продуктивности</h2>
-    <div class="features-grid">
-      <article class="feature-card">
-        <div class="feature-icon">🔐</div>
-        <h3>Личный аккаунт</h3>
-        <p>Регистрация и авторизация. Каждый видит только свои заметки.</p>
-      </article>
-      <article class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3>Автосохранение</h3>
-        <p>Пишите без кнопки «Сохранить» — изменения фиксируются автоматически.</p>
-      </article>
-      <article class="feature-card">
-        <div class="feature-icon">🔍</div>
-        <h3>Мгновенный поиск</h3>
-        <p>Находите нужное по заголовку и содержимому за секунды.</p>
-      </article>
-      <article class="feature-card">
-        <div class="feature-icon">📌</div>
-        <h3>Закрепление</h3>
-        <p>Важные заметки всегда наверху списка.</p>
-      </article>
-      <article class="feature-card">
-        <div class="feature-icon">🎨</div>
-        <h3>Цветовые метки</h3>
-        <p>Организуйте заметки визуально — 6 цветов на выбор.</p>
-      </article>
-      <article class="feature-card">
-        <div class="feature-icon">☁️</div>
-        <h3>Облачное хранение</h3>
-        <p>PostgreSQL и Docker — надёжная инфраструктура для ваших данных.</p>
-      </article>
+    <div class="landing-cta">
+      <a href="/register" class="btn btn-primary btn-lg">Создать расписание</a>
+      <a href="/login" class="btn btn-secondary btn-lg">Войти</a>
     </div>
   </section>
 
-  <section class="cta-section">
-    <h2>Готовы начать?</h2>
-    <p>Бесплатная регистрация за 30 секунд. Без карты.</p>
-    <a href="/register" class="btn btn-primary btn-lg">Зарегистрироваться</a>
+  <section class="landing-features">
+    <article class="feature-card">
+      <div class="feature-emoji">📋</div>
+      <h3>Режим дня</h3>
+      <p>Заполните события по времени — от утренней зарядки до вечернего сна.</p>
+    </article>
+    <article class="feature-card">
+      <div class="feature-emoji">✈️</div>
+      <h3>Telegram</h3>
+      <p>Каждое событие — уведомление в Telegram. Ничего не пропустите.</p>
+    </article>
+    <article class="feature-card">
+      <div class="feature-emoji">🔄</div>
+      <h3>Повторение</h3>
+      <p>Каждый день или выбранные дни недели — гибко настраивается.</p>
+    </article>
   </section>
-
-  <footer class="landing-footer">
-    <span>© 2026 NoteFlow</span>
-    <div class="footer-links">
-      <a href="/api/docs">API</a>
-      <a href="/login">Войти</a>
-    </div>
-  </footer>
 
   <script src="/static/js/auth.js"></script>
-  <script>
-    if (getToken()) window.location.href = "/app";
-  </script>
+  <script>if (getToken()) location.href = "/app";</script>
 </body>
 </html>

@@ -3,99 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Личный кабинет — NoteFlow</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Кабинет — DayFlow</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="dashboard-body">
-  <nav class="dash-nav">
+<body>
+  <nav class="nav">
     <a href="/" class="logo">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4 4h16v16H4V4z" stroke="currentColor" stroke-width="2" rx="2"/>
-        <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <span>NoteFlow</span>
+      <span class="logo-icon">☀️</span>
+      <span>DayFlow</span>
     </a>
-    <div class="dash-nav-links">
-      <a href="/app" class="btn btn-ghost">Заметки</a>
+    <div class="nav-links">
+      <a href="/app" class="btn btn-ghost">Мой день</a>
       <button id="btn-logout" class="btn btn-ghost">Выйти</button>
     </div>
   </nav>
 
-  <main class="dashboard">
-    <header class="dash-header">
-      <h1>Личный кабинет</h1>
-      <p>Управляйте профилем и смотрите статистику</p>
-    </header>
+  <main class="dashboard-page">
+    <h1>Личный кабинет</h1>
+    <p class="subtitle">Профиль и Telegram-синхронизация</p>
 
     <div class="dash-grid">
-      <section class="dash-card profile-card">
+      <section class="dash-card">
         <div class="profile-header">
           <div class="profile-avatar" id="profile-avatar">?</div>
           <div>
-            <h2 id="user-name">—</h2>
-            <p id="user-email" class="text-muted">—</p>
+            <h2 id="user-name" style="font-size:1.25rem;font-weight:600">—</h2>
+            <p class="text-muted" id="user-email">—</p>
             <p class="text-muted text-sm">С нами с <span id="user-created">—</span></p>
           </div>
         </div>
       </section>
 
-      <section class="dash-card stats-card">
-        <h3>Статистика</h3>
+      <section class="dash-card">
+        <h3>Расписание</h3>
         <div class="stats-row">
-          <div class="stat-item">
-            <span class="stat-value" id="stat-notes">0</span>
-            <span class="stat-label">Заметок</span>
+          <div>
+            <div class="stat-value" id="stat-events">0</div>
+            <div class="stat-label">Событий</div>
           </div>
-          <div class="stat-item">
-            <span class="stat-value" id="stat-pinned">0</span>
-            <span class="stat-label">Закреплённых</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-value" id="stat-reminders">0</span>
-            <span class="stat-label">Напоминаний</span>
+          <div>
+            <div class="stat-value" id="stat-active">0</div>
+            <div class="stat-label">Активных</div>
           </div>
         </div>
-        <a href="/app" class="btn btn-primary btn-full" style="margin-top: 20px">Открыть заметки</a>
+        <a href="/app" class="btn btn-primary btn-full" style="margin-top:20px">Открыть расписание</a>
       </section>
 
-      <section class="dash-card telegram-card">
-        <h3>Telegram-уведомления</h3>
-        <p class="text-muted text-sm telegram-desc">
-          Подключите Telegram, чтобы получать напоминания по заметкам.
+      <section class="dash-card">
+        <h3>Telegram</h3>
+        <p class="text-muted text-sm" style="margin-bottom:14px">
+          Подключите бота — он будет присылать уведомление о каждом событии режима дня.
         </p>
         <div id="telegram-status" class="telegram-status-badge">Проверка…</div>
         <div id="telegram-actions" class="telegram-actions hidden">
-          <a id="telegram-link" href="#" target="_blank" rel="noopener" class="btn btn-primary">Подключить Telegram</a>
-          <button type="button" id="btn-telegram-refresh" class="btn btn-ghost">Обновить статус</button>
-          <button type="button" id="btn-telegram-disconnect" class="btn btn-ghost hidden">Отключить</button>
+          <a id="telegram-link" href="#" class="btn btn-primary">Подключить Telegram</a>
+          <button id="btn-telegram-refresh" class="btn btn-ghost">Обновить</button>
+          <button id="btn-telegram-disconnect" class="btn btn-ghost hidden">Отключить</button>
         </div>
-        <p id="telegram-error" class="form-error" role="alert"></p>
-        <p id="telegram-success" class="form-success" role="status"></p>
+        <p id="telegram-error" class="form-error"></p>
+        <p id="telegram-success" class="form-success"></p>
       </section>
 
-      <section class="dash-card settings-card">
-        <h3>Настройки профиля</h3>
-        <form id="profile-form" class="auth-form">
+      <section class="dash-card">
+        <h3>Профиль</h3>
+        <form id="profile-form">
           <label class="form-field">
             <span>Имя</span>
-            <input type="text" id="form-name" required minlength="1" maxlength="100">
+            <input type="text" id="form-name" required>
           </label>
           <label class="form-field">
             <span>Новый пароль</span>
-            <input type="password" id="form-password" autocomplete="new-password" placeholder="Оставьте пустым, чтобы не менять" minlength="8">
+            <input type="password" id="form-password" placeholder="Оставьте пустым">
           </label>
-          <p id="profile-error" class="form-error" role="alert"></p>
-          <p id="profile-success" class="form-success" role="status"></p>
-          <button type="submit" id="save-profile" class="btn btn-primary">Сохранить</button>
+          <p id="profile-error" class="form-error"></p>
+          <p id="profile-success" class="form-success"></p>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
         </form>
       </section>
     </div>
   </main>
 
   <script src="/static/js/auth.js"></script>
-  <script src="/static/js/dashboard.js"></script>
+  <script src="/static/js/dashboard.js?v=3"></script>
 </body>
 </html>

@@ -16,7 +16,6 @@ def migrate_schema() -> None:
             user_cols = {c["name"] for c in inspector.get_columns("users")}
             if "telegram_chat_id" not in user_cols:
                 conn.execute(text("ALTER TABLE users ADD COLUMN telegram_chat_id BIGINT"))
-                logger.info("Added users.telegram_chat_id")
             if "telegram_link_token" not in user_cols:
                 conn.execute(text("ALTER TABLE users ADD COLUMN telegram_link_token VARCHAR(64)"))
                 conn.execute(
@@ -25,18 +24,6 @@ def migrate_schema() -> None:
                         "ON users (telegram_link_token)"
                     )
                 )
-                logger.info("Added users.telegram_link_token")
 
-        if "notes" in tables:
-            note_cols = {c["name"] for c in inspector.get_columns("notes")}
-            if "reminder_at" not in note_cols:
-                conn.execute(text("ALTER TABLE notes ADD COLUMN reminder_at TIMESTAMPTZ"))
-                logger.info("Added notes.reminder_at")
-            if "reminder_sent" not in note_cols:
-                conn.execute(
-                    text(
-                        "ALTER TABLE notes ADD COLUMN reminder_sent BOOLEAN "
-                        "NOT NULL DEFAULT FALSE"
-                    )
-                )
-                logger.info("Added notes.reminder_sent")
+        if "routine_events" not in tables:
+            logger.info("Table routine_events will be created by SQLAlchemy")

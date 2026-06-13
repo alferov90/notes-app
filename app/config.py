@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     telegram_bot_token: str = ""
     telegram_bot_username: str = ""
+    telegram_proxy_url: str = ""
+    app_timezone: str = "Europe/Moscow"
 
     @field_validator("telegram_bot_token", "telegram_bot_username", mode="before")
     @classmethod

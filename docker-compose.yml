@@ -27,6 +27,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-in-production}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Europe/Moscow}
+      TELEGRAM_PROXY_URL: ${TELEGRAM_PROXY_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
